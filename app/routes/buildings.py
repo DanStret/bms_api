@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from app.models import Edificio, Piso
+from sqlalchemy import text
 from app import db
 
 buildings_bp = Blueprint('buildings', __name__, url_prefix='/api/buildings')
@@ -33,6 +34,26 @@ def get_edificio(id_edificio):
         'estatus': edificio.estatus
     })
 
+@buildings_bp.route('/pisos', methods=['GET'])
+def get_pisos_by_edificio():
+    try:
+        id_edificio = request.args.get("id_edificio")
+        if not id_edificio:
+            return jsonify({"status": "error", "message": "Se requiere el parámetro id_edificio"}), 400
+
+        query = text("""
+            SELECT id_piso, nombre
+            FROM pisos
+            WHERE id_edificio = :id_edificio
+        """)
+        result = db.session.execute(query, {"id_edificio": id_edificio}).fetchall()
+
+        pisos = [{"id_piso": row.id_piso, "nombre": row.nombre} for row in result]
+        return jsonify({"status": "success", "pisos": pisos}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Error al obtener pisos: {str(e)}"}), 500
+    
+    
 # Create new building
 @buildings_bp.route('/', methods=['POST'])
 def crear_edificio():
