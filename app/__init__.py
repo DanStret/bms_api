@@ -1,4 +1,5 @@
 from flask import Flask, jsonify
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_cors import CORS
@@ -13,6 +14,15 @@ ma = Marshmallow()
 def create_app(config_name='default'):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
+    
+    
+    CORS(app, resources={
+        r"/*": {
+            "origins": ["http://localhost:3000", "https://bms-api-27l2.onrender.com"],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"]
+        }
+    })
     
     print(f"Current config: {app.config['SQLALCHEMY_DATABASE_URI']}")
     
