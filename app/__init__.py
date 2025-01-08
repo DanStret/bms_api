@@ -2,7 +2,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
-from flask_cors import CORS
+from flask_migrate import Migrate
 from config import config
 import pymysql
 
@@ -10,15 +10,15 @@ pymysql.install_as_MySQLdb()
 
 db = SQLAlchemy()
 ma = Marshmallow()
+migrate = Migrate() 
 
 def create_app(config_name='default'):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     
-    
     CORS(app, resources={
         r"/*": {
-            "origins": ["http://localhost:3000", "https://bms-api-27l2.onrender.com"],
+            "origins": ["http://localhost:3000", "https://bms-api-27l2.onrender.com", "http://localhost:5173"],  # Añade aquí la URL de tu frontend si es diferente
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"]
         }
@@ -28,7 +28,7 @@ def create_app(config_name='default'):
     
     db.init_app(app)
     ma.init_app(app)
-    CORS(app)
+    migrate.init_app(app, db)
     
     with app.app_context():
         # Importar blueprints
