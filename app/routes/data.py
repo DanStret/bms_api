@@ -75,8 +75,6 @@ def get_latest_data_presurizacion(id_sistema):
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
     
-from flask import request, jsonify
-from sqlalchemy import text
 
 @data_bp.route('/presurizacion/data/<int:id_sistema>', methods=['POST'])
 def insert_data_presurizacion(id_sistema):

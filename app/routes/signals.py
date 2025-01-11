@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify,request
 from app.models import Señal
 from sqlalchemy import text
 from app import db
@@ -84,3 +84,32 @@ def get_signals(id_sistema):
             "status": "error",
             "message": f"Error al obtener datos de presurización: {str(e)}"
         }), 500
+        
+@signals_bp.route('/insertar/<int:id_sistema>', methods=['POST'])
+def insertar_señal(id_sistema):
+    try:
+        data = request.get_json()
+
+        
+        required_fields = ["tipo_señal", "estatus"]
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"status": "error", "message": f"Falta el campo {field}"}), 400
+            
+        query = text("""
+            INSERT INTO señales(id_sistema,tipo_señal,estatus)
+            VALUES
+            (:id_sistema,:tipo_señal,:estatus);
+        """)
+
+        db.session.execute(query, {
+            "id_sistema": id_sistema,  # Usamos el id_sistema de la URL
+            "tipo_señal": data["tipo_señal"],
+            "estatus": data["estatus"],
+        })
+        db.session.commit()
+
+        return jsonify({"status": "success", "message": "Datos insertados correctamente"}), 201
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
