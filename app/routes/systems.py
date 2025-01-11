@@ -7,8 +7,6 @@ import locale
 import json
 import pymysql
 
-locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
-
 systems_bp = Blueprint('systems', __name__, url_prefix='/api/systems')
 
 # Obtener sistemas con filtros opcionales
