@@ -18,7 +18,8 @@ def create_app(config_name='default'):
     
     CORS(app, resources={
         r"/*": {
-            "origins": ["http://localhost:3000", "https://bms-api-27l2.onrender.com", "http://localhost:5173"],  # Añade aquí la URL de tu frontend si es diferente
+            "origins": ["http://localhost:3000", "https://bms-api-27l2.onrender.com", "http://localhost:5173","http://bms-api-m3oi.onrender.com",    # Añade esta línea
+            "https://bms-api-m3oi.onrender.com" ],  # Añade aquí la URL de tu frontend si es diferente
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"]
         }
