@@ -2,8 +2,12 @@ from flask import Blueprint, jsonify, request
 from app.models import Sistema, Equipo, Piso, Edificio
 from sqlalchemy import text
 from app import db
+from datetime import datetime
+import locale
+import json
 import pymysql
 
+locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
 
 systems_bp = Blueprint('systems', __name__, url_prefix='/api/systems')
 
@@ -140,5 +144,139 @@ def get_sistema_detalle(id_sistema):
             "message": str(e)
         }), 500
         
+
+
+@systems_bp.route('/types', methods=['GET'])
+def get_tipos_sistemas():
+    try:
+        id_edificio = request.args.get("id_edificio")
+        id_piso = request.args.get("id_piso")
         
+        if not id_edificio or not id_piso:
+            return jsonify({"error": "Se requieren id_edificio e id_piso"}), 400
+
+        query = text("""
+            SELECT DISTINCT tipo
+            FROM sistemas s
+            JOIN pisos p ON s.id_piso = p.id_piso 
+            WHERE p.id_edificio = :id_edificio 
+            AND p.id_piso = :id_piso
+        """)
+
+        result = db.session.execute(query, {
+            "id_edificio": id_edificio,
+            "id_piso": id_piso
+        })
+        tipos = [row.tipo for row in result]
+
+        return jsonify({"status": "success", "tipos": tipos}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
     
+@systems_bp.route('/by-type', methods=['GET'])
+def get_sistemas_by_tipo():
+   try:
+       id_edificio = request.args.get("id_edificio")
+       id_piso = request.args.get("id_piso")
+       tipo = request.args.get("tipo")
+
+       if not all([id_edificio, id_piso, tipo]):
+           return jsonify({"error": "Se requieren id_edificio, id_piso y tipo"}), 400
+
+       query = text("""
+           SELECT s.id_sistema, s.nombre, s.estatus, s.fecha_instalacion
+            FROM sistemas s
+            JOIN pisos p ON s.id_piso = p.id_piso
+            WHERE p.id_edificio = :id_edificio 
+            AND p.id_piso = :id_piso 
+            AND s.tipo = :tipo
+            AND s.estatus = 'Activo';
+       """)
+
+       result = db.session.execute(query, {
+           "id_edificio": id_edificio,
+           "id_piso": id_piso,
+           "tipo": tipo
+       })
+
+       sistemas = [{
+           "id_sistema": row.id_sistema,
+           "nombre": row.nombre,
+           "estatus": row.estatus,
+           "tipo": tipo,
+           "fecha_instalacion": row.fecha_instalacion.strftime("%d de %B de %Y %H:%M:%S") if row.fecha_instalacion else None
+       } for row in result]
+
+       return jsonify({"status": "success", "sistemas": sistemas}), 200
+   except Exception as e:
+       return jsonify({"status": "error", "message": str(e)}), 500
+   
+   
+@systems_bp.route('/fancoil', methods=['GET'])
+def get_fancoil_by_piso_and_edificio():
+    try:
+        # Parámetros de filtro
+        id_edificio = request.args.get("id_edificio", type=int)
+        id_piso = request.args.get("id_piso", type=int)
+
+        # Validación de id_edificio
+        if not id_edificio:
+            return jsonify({
+                "status": "error",
+                "message": "Se requiere el parámetro id_edificio."
+            }), 400
+
+        # Construcción dinámica del filtro SQL
+        query_base = """
+            SELECT 
+                e.nombre AS edificio,
+                p.nombre AS piso,
+                s.nombre AS nombre,
+                s.id_sistema,
+                s.tipo,
+                s.estatus,
+                s.fecha_instalacion
+            FROM 
+                edificios e
+            JOIN 
+                pisos p ON e.id_edificio = p.id_edificio
+            JOIN 
+                sistemas s ON p.id_piso = s.id_piso
+            WHERE 
+                s.tipo = 'Fancoil'
+                AND e.id_edificio = :id_edificio
+        """
+
+        if id_piso:
+            query_base += " AND p.id_piso = :id_piso"
+
+        # Crear consulta final
+        query = text(query_base)
+
+        # Ejecutar la consulta con los parámetros apropiados
+        params = {"id_edificio": id_edificio}
+        if id_piso:
+            params["id_piso"] = id_piso
+
+        result = db.session.execute(query, params).fetchall()
+
+        # Construcción de la respuesta
+        fancoil_systems = [{
+            "edificio": row.edificio,
+            "piso": row.piso,
+            "id_sistema": row.id_sistema,
+            "nombre": row.nombre,
+            "tipo": row.tipo,
+            "estatus": row.estatus,
+            "fecha_instalacion": row.fecha_instalacion.isoformat() if row.fecha_instalacion else None
+        } for row in result]
+
+        return jsonify({
+            "status": "success",
+            "sistemas": fancoil_systems
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Error al obtener sistemas Fancoil: {str(e)}"
+        }), 500

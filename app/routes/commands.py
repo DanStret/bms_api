@@ -44,57 +44,37 @@ def create_comando():
         return jsonify({"status": "error", "message": f"Error al crear el comando: {str(e)}"}), 500
 
 
-@commands_bp.route('/usuario/<int:id_usuario>', methods=['GET'])
-def get_comandos_usuario(id_usuario):
-    try:
-        query = """
-            SELECT c.id, c.id_sistema, tc.nombre as tipo_comando, 
-                   c.codigo, c.descripcion, c.fecha
-            FROM comandos c
-            JOIN tipos_comandos tc ON c.id_tipo_comando = tc.id_tipo_comando
-            WHERE c.id_usuario = :id_usuario
-            ORDER BY c.fecha DESC
-        """
-        result = db.session.execute(text(query), {"id_usuario": id_usuario}).fetchall()
 
-        comandos = [{
-            "id": row.id,
-            "id_sistema": row.id_sistema,
-            "tipo_comando": row.tipo_comando,
-            "codigo": row.codigo,
-            "descripcion": row.descripcion,
-            "fecha": row.fecha.strftime('%Y-%m-%d %H:%M:%S')
-        } for row in result]
 
-        return jsonify({"status": "success", "comandos": comandos}), 200
-
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"Error al obtener comandos: {str(e)}"}), 500
-
-@commands_bp.route('/sistema', methods=['GET'])
-def get_comandos_sistema():
-    try:
-        id_sistema = request.args.get("id_sistema")
-        if not id_sistema:
-            return jsonify({"status": "error", "message": "Se requiere el parámetro 'id_sistema'"}), 400
+@commands_bp.route('/sistemas/<int:id_sistema>', methods=['GET'])
+def get_comandos_sistema(id_sistema):
+    try: 
 
         query = """
-            SELECT c.id, tc.nombre as tipo_comando, 
-                   c.codigo, c.descripcion, c.fecha
-            FROM comandos c
-            JOIN tipos_comandos tc ON c.id_tipo_comando = tc.id_tipo_comando
-            WHERE c.id_sistema = :id_sistema
-            ORDER BY c.fecha DESC
-            LIMIT 10
+            SELECT 
+                s.id_sistema, 
+                s.nombre AS sistema_nombre, 
+                t.nombre AS comando_nombre, 
+                t.descripcion AS comando_descripcion, 
+                t.codigo_comando, t.id_tipo_comando
+            FROM 
+                sistemas s
+            JOIN 
+                sistemas_comandos sc ON s.id_sistema = sc.id_sistema
+            JOIN 
+                tipos_comandos t ON sc.id_tipo_comando = t.id_tipo_comando
+            WHERE 
+                s.id_sistema = :id_sistema;
         """
         result = db.session.execute(text(query), {"id_sistema": id_sistema}).fetchall()
 
         comandos = [{
-            "id": row.id,
-            "tipo_comando": row.tipo_comando,
-            "codigo": row.codigo,
-            "descripcion": row.descripcion,
-            "fecha": row.fecha.strftime('%Y-%m-%d %H:%M:%S')
+            "id_sistema": row.id_sistema,
+            "id_tipo_comando": row.id_tipo_comando,
+            "sistema_nombre": row.sistema_nombre,
+            "comando_nombre": row.comando_nombre,
+            "comando_descripcion": row.comando_descripcion,
+            "codigo_comando": row.codigo_comando
         } for row in result]
 
         return jsonify({"status": "success", "comandos": comandos}), 200
@@ -105,44 +85,33 @@ def get_comandos_sistema():
 @commands_bp.route('/insert', methods=['POST'])
 def insertar_comando():
     try:
+        # Obtener datos del cuerpo de la solicitud
         data = request.get_json()
-        required_fields = ["id_sistema", "id_tipo_comando", "codigo", "descripcion"]
-        if not all(k in data for k in required_fields):
+
+        # Verificar campos requeridos
+        if not all(field in data for field in ["id_sistema", "id_tipo_comando", "descripcion"]):
             return jsonify({
                 "status": "error", 
-                "message": f"Faltan campos requeridos: {', '.join(required_fields)}"
+                "message": "Faltan campos requeridos"
             }), 400
 
-        # Verificar que el tipo de comando existe
-        tipo_comando_query = """
-            SELECT id_tipo_comando FROM tipos_comandos 
-            WHERE id_tipo_comando = :id_tipo_comando
+        # Insertar comando ejecutado en la tabla comandos_ejecutados
+        insert_comando_query = """
+            INSERT INTO comandos_ejecutados (id_sistema, id_usuario, id_tipo_comando, parametros, descripcion)
+            VALUES (:id_sistema, :id_usuario, :id_tipo_comando, :parametros, :descripcion)
         """
-        tipo_comando = db.session.execute(text(tipo_comando_query), {
-            "id_tipo_comando": data["id_tipo_comando"]
-        }).fetchone()
-
-        if not tipo_comando:
-            return jsonify({
-                "status": "error",
-                "message": "El tipo de comando especificado no existe"
-            }), 400
-
-        query = """
-            INSERT INTO comandos (id_sistema, id_usuario, id_tipo_comando, codigo, descripcion, fecha)
-            VALUES (:id_sistema, :id_usuario, :id_tipo_comando, :codigo, :descripcion, NOW())
-        """
-        db.session.execute(text(query), {
+        db.session.execute(text(insert_comando_query), {
             "id_sistema": data["id_sistema"],
             "id_usuario": data.get("id_usuario", 1),  # Usuario predeterminado si no se especifica
             "id_tipo_comando": data["id_tipo_comando"],
-            "codigo": data["codigo"],
+            "parametros": data.get("parametros", "{}"),  # Parámetros predeterminados si no se especifican
             "descripcion": data["descripcion"]
         })
         db.session.commit()
 
-        return jsonify({"status": "success", "message": "Comando creado correctamente"}), 201
+        return jsonify({"status": "success", "message": "Comando ejecutado correctamente"}), 201
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({"status": "error", "message": f"Error al crear el comando: {str(e)}"}), 500
+        return jsonify({"status": "error", "message": f"Error al ejecutar el comando: {str(e)}"}), 500
+

@@ -74,3 +74,84 @@ def get_latest_data_presurizacion(id_sistema):
         return jsonify({"status": "success", "data_presurizacion": data}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+    
+from flask import request, jsonify
+from sqlalchemy import text
+
+@data_bp.route('/presurizacion/data/<int:id_sistema>', methods=['POST'])
+def insert_data_presurizacion(id_sistema):
+    try:
+        # Obtenemos los datos del cuerpo de la solicitud
+        data = request.get_json()
+
+        # Validación de los datos requeridos
+        required_fields = ["tensionMotor", "tensionDC", "corriente", "potencia", 
+                           "frecuencia", "temperatura", "IA", "AV"]
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"status": "error", "message": f"Falta el campo {field}"}), 400
+        
+        # Construcción de la consulta SQL para insertar los datos
+        query = text("""
+            INSERT INTO data_presurizacion
+            (id_sistema, timestamp, tensionMotor, tensionDC, corriente, potencia, 
+            frecuencia, temperatura, IA, AV)
+            VALUES
+            (:id_sistema, NOW(), :tensionMotor, :tensionDC, :corriente, :potencia,
+            :frecuencia, :temperatura, :IA, :AV)
+        """)
+
+        # Ejecutamos la consulta con los datos recibidos
+        db.session.execute(query, {
+            "id_sistema": id_sistema,  # Usamos el id_sistema de la URL
+            "tensionMotor": data["tensionMotor"],
+            "tensionDC": data["tensionDC"],
+            "corriente": data["corriente"],
+            "potencia": data["potencia"],
+            "frecuencia": data["frecuencia"],
+            "temperatura": data["temperatura"],
+            "IA": data["IA"],
+            "AV": data["AV"]
+        })
+        db.session.commit()
+
+        return jsonify({"status": "success", "message": "Datos insertados correctamente"}), 201
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+
+@data_bp.route('/fancoil/<int:id_sistema>', methods=['GET'])
+def get_latest_data_fancoil(id_sistema):
+    try:
+        query = text("""
+            SELECT id_sistema, timestamp, temp_amb , temp_setpoint , estado_valvula ,
+            fan_speed , modo_trabajo , on_off , bloqueo 
+            from data_fancoil 
+            where id_sistema = :id_sistema 
+            ORDER BY timestamp DESC LIMIT 1
+
+        """)
+        result = db.session.execute(query, {"id_sistema": id_sistema}).fetchone()
+
+        if not result:
+            return jsonify({
+                "status": "error", 
+                "message": "No se encontraron datos para el sistema especificado"
+            }), 404
+
+        data = {
+            "id_sistema": result.id_sistema,
+            "temp_amb": result.temp_amb,
+            "temp_setpoint": result.temp_setpoint,
+            "estado_valvula": result.estado_valvula,
+            "fan_speed": result.fan_speed,
+            "modo_trabajo": result.modo_trabajo,
+            "on_off": result.on_off,
+            "bloqueo": result.bloqueo,
+        }
+        return jsonify({"status": "success", "data_fancoil": data}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    
