@@ -115,3 +115,47 @@ def insertar_comando():
         db.session.rollback()
         return jsonify({"status": "error", "message": f"Error al ejecutar el comando: {str(e)}"}), 500
 
+@commands_bp.route('/last/<int:id_sistema>', methods=['GET'])
+def get_ultimo_comando(id_sistema):
+    try:
+        query = """
+            SELECT ce.*, tc.codigo_comando
+            FROM comandos_ejecutados ce
+            LEFT JOIN tipos_comandos tc ON ce.id_tipo_comando = tc.id_tipo_comando
+            WHERE ce.id_sistema = :id_sistema
+            ORDER BY ce.fecha DESC, ce.id DESC
+            LIMIT 1
+        """
+        
+        result = db.session.execute(text(query), {
+            "id_sistema": id_sistema
+        }).fetchone()
+
+        if result is None:
+            return jsonify({
+                "status": "success",
+                "message": "No hay comandos ejecutados para este sistema",
+                "comando": None
+            }), 200
+
+        comando = {
+            "id": result.id,
+            "id_sistema": result.id_sistema,
+            "id_usuario": result.id_usuario,
+            "id_tipo_comando": result.id_tipo_comando,
+            "parametros": result.parametros,
+            "descripcion": result.descripcion,
+            "fecha": result.fecha.strftime('%Y-%m-%d %H:%M:%S') if result.fecha else None,
+            "codigo_comando": result.codigo_comando
+        }
+
+        return jsonify({
+            "status": "success",
+            "comando": comando
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Error al obtener el último comando: {str(e)}"
+        }), 500
