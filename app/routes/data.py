@@ -153,3 +153,54 @@ def get_latest_data_fancoil(id_sistema):
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
     
+@data_bp.route('/fancoil/data/<int:id_sistema>', methods=['POST'])
+def insert_data_fancoil(id_sistema):
+    try:
+        # Obtenemos los datos del cuerpo de la solicitud
+        data = request.get_json()
+
+        # Validación de los datos requeridos
+        required_fields = ["temp_amb", "temp_setpoint", "estado_valvula", 
+                         "fan_speed", "modo_trabajo", "on_off", "bloqueo"]
+        
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    "status": "error", 
+                    "message": f"Falta el campo {field}"
+                }), 400
+        
+        # Construcción de la consulta SQL para insertar los datos
+        query = text("""
+            INSERT INTO data_fancoil
+            (id_sistema, timestamp, temp_amb, temp_setpoint, estado_valvula,
+            fan_speed, modo_trabajo, on_off, bloqueo)
+            VALUES
+            (:id_sistema, NOW(), :temp_amb, :temp_setpoint, :estado_valvula,
+            :fan_speed, :modo_trabajo, :on_off, :bloqueo)
+        """)
+
+        # Ejecutamos la consulta con los datos recibidos
+        db.session.execute(query, {
+            "id_sistema": id_sistema,
+            "temp_amb": data["temp_amb"],
+            "temp_setpoint": data["temp_setpoint"],
+            "estado_valvula": data["estado_valvula"],
+            "fan_speed": data["fan_speed"],
+            "modo_trabajo": data["modo_trabajo"],
+            "on_off": data["on_off"],
+            "bloqueo": data["bloqueo"]
+        })
+        db.session.commit()
+
+        return jsonify({
+            "status": "success", 
+            "message": "Datos del fancoil insertados correctamente"
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "status": "error", 
+            "message": f"Error al insertar datos: {str(e)}"
+        }), 500
