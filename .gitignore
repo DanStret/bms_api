@@ -5,3 +5,5 @@ __pycache__/
 *.py
 
 
+# Excepto modes.py
+!app/routes/modes.py
