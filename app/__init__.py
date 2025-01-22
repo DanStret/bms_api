@@ -38,13 +38,14 @@ def create_app(config_name='default'):
         from .routes.data import data_bp
         from .routes.commands import commands_bp
         from .routes.signals import signals_bp
-
+        from .routes.modes import modes_bp
         # Registrar blueprints
         app.register_blueprint(buildings_bp)
         app.register_blueprint(systems_bp)
         app.register_blueprint(data_bp)
         app.register_blueprint(commands_bp)
         app.register_blueprint(signals_bp)
+        app.register_blueprint(modes_bp)
 
         # Crear las tablas
         db.create_all()

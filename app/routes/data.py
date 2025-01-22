@@ -1,5 +1,4 @@
 from flask import Blueprint, jsonify, request
-from app.models import DataCO2, DataPresurizacion
 from sqlalchemy import text
 from app import db
 
