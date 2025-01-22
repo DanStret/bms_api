@@ -39,6 +39,50 @@ def get_data_co2(id_sistema):
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@data_bp.route('/co2/data/<int:id_sistema>', methods=['POST'])
+def insert_data_co2(id_sistema):
+    try:
+        # Obtenemos los datos del cuerpo de la solicitud
+        data = request.get_json()
+
+        # Validación de los datos requeridos
+        required_fields = ["tensionMotor", "tensionDC", "corriente", "potencia", 
+                           "frecuencia", "temperatura", "AI", "contaminacion"]
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"status": "error", "message": f"Falta el campo {field}"}), 400
+        
+        # Construcción de la consulta SQL para insertar los datos
+        query = text("""
+            INSERT INTO data_co2
+            (id_sistema, timestamp, tensionMotor, tensionDC, corriente, potencia, 
+            frecuencia, temperatura, AI, contaminacion)
+            VALUES
+            (:id_sistema, NOW(), :tensionMotor, :tensionDC, :corriente, :potencia,
+            :frecuencia, :temperatura, :AI, :contaminacion)
+        """)
+
+        # Ejecutamos la consulta con los datos recibidos
+        db.session.execute(query, {
+            "id_sistema": id_sistema,  # Usamos el id_sistema de la URL
+            "tensionMotor": data["tensionMotor"],
+            "tensionDC": data["tensionDC"],
+            "corriente": data["corriente"],
+            "potencia": data["potencia"],
+            "frecuencia": data["frecuencia"],
+            "temperatura": data["temperatura"],
+            "AI": data["AI"],
+            "contaminacion": data["contaminacion"]
+        })
+        db.session.commit()
+
+        return jsonify({"status": "success", "message": "Datos insertados correctamente"}), 201
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+
 @data_bp.route('/presurizacion/<int:id_sistema>', methods=['GET'])
 def get_latest_data_presurizacion(id_sistema):
     try:
