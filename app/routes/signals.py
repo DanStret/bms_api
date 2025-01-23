@@ -85,7 +85,7 @@ def get_signals(id_sistema):
             "message": f"Error al obtener datos de presurización: {str(e)}"
         }), 500
         
-@signals_bp.route('/insertar/<int:id_sistema>', methods=['POST'])
+@signals_bp.route('/insert/signal/<int:id_sistema>', methods=['POST'])
 def insertar_señal(id_sistema):
     try:
         data = request.get_json()
@@ -106,6 +106,35 @@ def insertar_señal(id_sistema):
             "id_sistema": id_sistema,  # Usamos el id_sistema de la URL
             "tipo_señal": data["tipo_señal"],
             "estatus": data["estatus"],
+        })
+        db.session.commit()
+
+        return jsonify({"status": "success", "message": "Datos insertados correctamente"}), 201
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    
+    
+@signals_bp.route('/insert/estado/<int:id_sistema>', methods=['POST'])
+def insertar_estado(id_sistema):
+    try:
+        data = request.get_json()
+
+            
+        required_fields = ["estado"]
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"status": "error", "message": f"Falta el campo {field}"}), 400
+                
+        query = text("""
+                INSERT INTO estados(id_sistema,estado)
+                VALUES
+             (:id_sistema,:estado);
+        """)
+
+        db.session.execute(query, {
+                "id_sistema": id_sistema,  # Usamos el id_sistema de la URL
+                "estado": data["estado"],
         })
         db.session.commit()
 
