@@ -88,7 +88,7 @@ def get_latest_data_presurizacion(id_sistema):
     try:
         query = text("""
             SELECT id, timestamp, tensionMotor, tensionDC, Corriente, Potencia, 
-                   Frecuencia, Temperatura, IA, AV
+                   Frecuencia, Temperatura, IA, presion
             FROM data_presurizacion
             WHERE id_sistema = :id_sistema
             ORDER BY timestamp DESC
@@ -112,7 +112,7 @@ def get_latest_data_presurizacion(id_sistema):
             "frecuencia": result.Frecuencia,
             "temperatura": result.Temperatura,
             "IA": result.IA,
-            "AV": result.AV,
+            "presion": result.presion,
         }
         return jsonify({"status": "success", "data_presurizacion": data}), 200
     except Exception as e:
