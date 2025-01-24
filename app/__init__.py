@@ -18,9 +18,9 @@ def create_app(config_name='default'):
     
     CORS(app, resources={
         r"/api/*": {
-            "origins": ["http://localhost:3000", "https://bms-smart.onrender.com", "http://localhost:5173", "http://bms-api-m3oi.onrender.com", "https://bms-api-m3oi.onrender.com"],
+            "origins": ["http://localhost:3000", "https://bms-smart.onrender.com"],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type"],
+            "allow_headers": ["Content-Type", "Authorization"],
             "supports_credentials": False,
             "expose_headers": ["Content-Range", "X-Content-Range"]
         }
