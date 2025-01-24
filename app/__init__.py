@@ -15,7 +15,18 @@ migrate = Migrate()
 def create_app(config_name='default'):
    app = Flask(__name__)
    app.config.from_object(config[config_name])
-   CORS(app, supports_credentials=False)  # Configuración CORS simple
+   app.config['CORS_HEADERS'] = 'Content-Type'
+   
+   CORS(app, resources={
+    r"/api/*": {
+        "origins": ["https://bms-smart.onrender.com", "http://localhost:3000"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "max_age": 3600,
+        "automatic_options": True,
+        "supports_credentials": False
+    }
+})
 
    print(f"Current config: {app.config['SQLALCHEMY_DATABASE_URI']}")
    
