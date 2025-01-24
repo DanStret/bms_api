@@ -2,23 +2,9 @@ from flask import Blueprint, jsonify, request
 from app.models import Edificio, Piso
 from sqlalchemy import text
 from app import db
-from flask_cors import cross_origin
 
 buildings_bp = Blueprint('buildings', __name__, url_prefix='/api/buildings')
 
-@buildings_bp.after_request
-def after_buildings_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    return response
-
-# Decorador para todas las rutas
-@buildings_bp.route('/', methods=['OPTIONS'])
-@cross_origin()
-def handle_preflight():
-    response = jsonify({'status': 'ok'})
-    return response
 
 # Get all buildings
 @buildings_bp.route('/', methods=['GET'])
