@@ -17,12 +17,16 @@ def create_app(config_name='default'):
     app.config.from_object(config[config_name])
     
     # Configuración CORS global
-    CORS(app, 
-         origins=["https://bms-smart.onrender.com", "http://localhost:3000"],
-         supports_credentials=True,
-         allow_headers=["Content-Type", "Authorization"],
-         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-         expose_headers=["Content-Type"])
+    CORS(app, resources={
+        r"/*": {
+            "origins": "*",
+            "allow_headers": "*",
+            "expose_headers": "*",
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "supports_credentials": True,
+            "send_wildcard": True
+        }
+    })
     
     # Configuración específica para /api/*
     app.config['CORS_HEADERS'] = 'Content-Type'
