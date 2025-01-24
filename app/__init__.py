@@ -21,7 +21,7 @@ def create_app(config_name='default'):
        r"/*": {
            "origins": ["https://bms-smart.onrender.com", "http://localhost:3000"],
            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-           "allow_headers": ["Content-Type"]
+           "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
        }
    })
 
