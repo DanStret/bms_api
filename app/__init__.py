@@ -18,12 +18,14 @@ def create_app(config_name='default'):
    app.config['CORS_HEADERS'] = 'Content-Type'
    
    CORS(app, resources={
-       r"/*": {
-           "origins": ["https://bms-smart.onrender.com", "http://localhost:3000"],
-           "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-           "allow_headers": ["Content-Type"]
-       }
-   })
+        r"/api/*": {
+            "origins": ["https://bms-smart.onrender.com", "http://localhost:3000"],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "expose_headers": ["Content-Type"],
+            "supports_credentials": True
+        }
+    })
 
    print(f"Current config: {app.config['SQLALCHEMY_DATABASE_URI']}")
    
