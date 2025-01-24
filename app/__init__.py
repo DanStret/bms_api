@@ -13,45 +13,45 @@ ma = Marshmallow()
 migrate = Migrate()
 
 def create_app(config_name='default'):
-   app = Flask(__name__)
-   app.config.from_object(config[config_name])
-   app.config['CORS_HEADERS'] = 'Content-Type'
-   
-   CORS(app, resources={
-        r"/api/*": {
-            "origins": ["https://bms-smart.onrender.com", "http://localhost:3000"],
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
-            "expose_headers": ["Content-Type"],
-            "supports_credentials": True
-        }
-    })
+    app = Flask(__name__)
+    app.config.from_object(config[config_name])
+    
+    # Configuración CORS global
+    CORS(app, 
+         origins=["https://bms-smart.onrender.com", "http://localhost:3000"],
+         supports_credentials=True,
+         allow_headers=["Content-Type", "Authorization"],
+         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+         expose_headers=["Content-Type"])
+    
+    # Configuración específica para /api/*
+    app.config['CORS_HEADERS'] = 'Content-Type'
+    
+    print(f"Current config: {app.config['SQLALCHEMY_DATABASE_URI']}")
+    
+    db.init_app(app)
+    ma.init_app(app)
+    migrate.init_app(app, db)
+    
+    with app.app_context():
+        from .routes.buildings import buildings_bp
+        from .routes.systems import systems_bp
+        from .routes.data import data_bp
+        from .routes.commands import commands_bp
+        from .routes.signals import signals_bp
+        from .routes.modes import modes_bp
+        
+        app.register_blueprint(buildings_bp)
+        app.register_blueprint(systems_bp)
+        app.register_blueprint(data_bp)
+        app.register_blueprint(commands_bp)
+        app.register_blueprint(signals_bp)
+        app.register_blueprint(modes_bp)
 
-   print(f"Current config: {app.config['SQLALCHEMY_DATABASE_URI']}")
-   
-   db.init_app(app)
-   ma.init_app(app)
-   migrate.init_app(app, db)
-   
-   with app.app_context():
-       from .routes.buildings import buildings_bp
-       from .routes.systems import systems_bp
-       from .routes.data import data_bp
-       from .routes.commands import commands_bp
-       from .routes.signals import signals_bp
-       from .routes.modes import modes_bp
-       
-       app.register_blueprint(buildings_bp)
-       app.register_blueprint(systems_bp)
-       app.register_blueprint(data_bp)
-       app.register_blueprint(commands_bp)
-       app.register_blueprint(signals_bp)
-       app.register_blueprint(modes_bp)
+        db.create_all()
 
-       db.create_all()
+        print("Registered blueprints:")
+        for rule in app.url_map.iter_rules():
+            print(f"{rule}")
 
-       print("Registered blueprints:")
-       for rule in app.url_map.iter_rules():
-           print(f"{rule}")
-
-   return app
+    return app
