@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from flask_cors import cross_origin 
 from app.models import Edificio, Piso
 from sqlalchemy import text
 from app import db
@@ -8,7 +9,9 @@ buildings_bp = Blueprint('buildings', __name__, url_prefix='/api/buildings')
 
 # Get all buildings
 @buildings_bp.route('/', methods=['GET'])
+@cross_origin()
 def get_edificios():
+    print("Solicitud recibida en /api/buildings")
     edificios = Edificio.query.all()
     return jsonify([{
         'id_edificio': e.id_edificio,
