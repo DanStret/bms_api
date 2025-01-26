@@ -30,6 +30,11 @@ def create_app(config_name='default'):
     ma.init_app(app)
     migrate.init_app(app, db)
 
+    # Endpoint de prueba
+    @app.route('/api/test', methods=['GET'])
+    def test():
+        return jsonify({"message": "Hello from Render!"})
+
     with app.app_context():
         # Importa los blueprints
         from .routes.buildings import buildings_bp
