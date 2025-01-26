@@ -15,45 +15,42 @@ migrate = Migrate()
 def create_app(config_name='default'):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
-    app.config['CORS_HEADERS'] = 'Content-Type'
-    
+
+    # Configuración de CORS corregida
     CORS(app, resources={
-        r"/*": {
-            "origins": "*",
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
-            "expose_headers": ["Content-Type"]
-        }
+    r"/*": {
+        "origins": [
+            "http://localhost:3000",  # Para desarrollo local
+            "https://bms-smart.onrender.com",  # Frontend en Render
+            "https://bms-api-m3oi.onrender.com"  # API en Render
+        ],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
     })
 
-    @app.after_request
-    def after_request(response):
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
-        return response
-
     print(f"Current config: {app.config['SQLALCHEMY_DATABASE_URI']}")
-    
+
     db.init_app(app)
     ma.init_app(app)
     migrate.init_app(app, db)
-    
+
     with app.app_context():
+        # Importar blueprints
         from .routes.buildings import buildings_bp
         from .routes.systems import systems_bp
         from .routes.data import data_bp
         from .routes.commands import commands_bp
         from .routes.signals import signals_bp
-        from .routes.modes import modes_bp
-        
+
+        # Registrar blueprints
         app.register_blueprint(buildings_bp)
         app.register_blueprint(systems_bp)
         app.register_blueprint(data_bp)
         app.register_blueprint(commands_bp)
         app.register_blueprint(signals_bp)
-        app.register_blueprint(modes_bp)
 
+        # Crear las tablas
         db.create_all()
 
         print("Registered blueprints:")
