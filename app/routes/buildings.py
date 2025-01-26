@@ -6,7 +6,6 @@ from app import db
 
 buildings_bp = Blueprint('buildings', __name__, url_prefix='/api/buildings')
 
-
 # Get all buildings
 @buildings_bp.route('/', methods=['GET'])
 @cross_origin()
@@ -27,6 +26,7 @@ def get_edificios():
     } for e in edificios])
 
 @buildings_bp.route('/<int:id_edificio>', methods=['GET'])
+@cross_origin()
 def get_edificio(id_edificio):
     edificio = Edificio.query.get_or_404(id_edificio)
     return jsonify({
@@ -38,6 +38,7 @@ def get_edificio(id_edificio):
     })
 
 @buildings_bp.route('/pisos', methods=['GET'])
+@cross_origin()
 def get_pisos_by_edificio():
     try:
         id_edificio = request.args.get("id_edificio")
@@ -56,9 +57,9 @@ def get_pisos_by_edificio():
     except Exception as e:
         return jsonify({"status": "error", "message": f"Error al obtener pisos: {str(e)}"}), 500
     
-    
 # Create new building
 @buildings_bp.route('/', methods=['POST'])
+@cross_origin()
 def crear_edificio():
     data = request.get_json()
     nuevo_edificio = Edificio(
@@ -83,6 +84,3 @@ def crear_edificio():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 400
-    
-    
-
