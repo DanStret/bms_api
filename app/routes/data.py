@@ -293,12 +293,12 @@ def insert_chiller_principal_data(id_sistema):
         
         query = text("""
             INSERT INTO data_chiller_principal (
-                id_sistema, temp_salida_agua, temp_entrada_agua, temp_aire_ambiente,
+                id_chiller,id_sistema,temp_salida_agua, temp_entrada_agua, temp_aire_ambiente,
                 presion_succion_sys1, presion_succion_sys2, presion_descarga_sys1,
                 presion_descarga_sys2, setpoint_salida_agua, setpoint_remoto,
                 estado_sys1, estado_sys2, alarma_chiller, encendido, modo_control
             ) VALUES (
-                :id_sistema, :temp_salida_agua, :temp_entrada_agua, :temp_aire_ambiente,
+                :id_chiller, :id_sistema, :temp_salida_agua, :temp_entrada_agua, :temp_aire_ambiente,
                 :presion_succion_sys1, :presion_succion_sys2, :presion_descarga_sys1,
                 :presion_descarga_sys2, :setpoint_salida_agua, :setpoint_remoto,
                 :estado_sys1, :estado_sys2, :alarma_chiller, :encendido, :modo_control
