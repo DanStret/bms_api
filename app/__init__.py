@@ -3,7 +3,7 @@ from flask_cors import CORS
 from config import config
 from datetime import datetime
 from collections import defaultdict
-from .extensions import db, ma, migrate
+from app.extensions import db, ma, migrate
 
 def create_app(config_name='default'):
     app = Flask(__name__)
