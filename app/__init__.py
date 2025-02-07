@@ -20,12 +20,9 @@ def create_app(config_name='default'):
     app.config.from_object(config[config_name])
 
     CORS(app, 
-     origins=["http://localhost:3000", "https://bms-smart.onrender.com", "*"],
+     origins=["http://localhost:3000", "https://bms-smart.onrender.com"],
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization"])
-
-    # Imprime la configuración actual (para depuración)
-    print(f"Current config: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
     # Inicializa las extensiones con la aplicación
     db.init_app(app)
