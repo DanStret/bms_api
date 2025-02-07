@@ -19,8 +19,10 @@ def create_app(config_name='default'):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
 
-    # Configuración de CORS de manera global
-    CORS(app)  # Habilita CORS para todas las rutas y orígenes
+    CORS(app, 
+     origins=["http://localhost:3000", "https://bms-smart.onrender.com", "*"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization"])
 
     # Imprime la configuración actual (para depuración)
     print(f"Current config: {app.config['SQLALCHEMY_DATABASE_URI']}")
