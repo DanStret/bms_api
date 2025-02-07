@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
-from app.models import Sistema, Equipo, Piso, Edificio
 from sqlalchemy import text
+from app.models import Sistema,Equipo,Piso
 from app import db
 from datetime import datetime
 import locale
@@ -8,6 +8,92 @@ import json
 import pymysql
 
 systems_bp = Blueprint('systems', __name__, url_prefix='/api/systems')
+
+@systems_bp.route('/', methods=['POST'])
+def create_sistema():
+    try:
+        data = request.get_json()
+        
+        if 'sistema' in data:
+            data = data['sistema']
+            
+        # Validar campos requeridos del sistema
+        required_fields = ['nombre', 'tipo', 'id_piso']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    "status": "error",
+                    "message": f"Campo requerido faltante: {field}"
+                }), 400
+                
+        # Validar campos requeridos de características
+        if 'caracteristicas' not in data:
+            return jsonify({
+                "status": "error",
+                "message": "Se requieren las características del sistema"
+            }), 400
+            
+        required_caracteristicas = ['nombre', 'marca', 'modelo']
+        for field in required_caracteristicas:
+            if field not in data['caracteristicas']:
+                return jsonify({
+                    "status": "error",
+                    "message": f"Campo requerido faltante en características: {field}"
+                }), 400
+
+        # Iniciar transacción
+        try:
+            # Insertar sistema
+            sistema_query = text("""
+                INSERT INTO sistemas 
+                (nombre, tipo, estatus, id_piso, id_edificio)
+                VALUES 
+                (:nombre, :tipo, :estatus, :id_piso, :id_edificio)
+            """)
+            
+            result = db.session.execute(sistema_query, {
+                'nombre': data['nombre'],
+                'tipo': data['tipo'],
+                'estatus': data.get('estatus', 'Activo'),
+                'id_piso': data['id_piso'],
+                'id_edificio': data.get('id_edificio')
+            })
+            
+            # Obtener el ID del sistema insertado
+            sistema_id = result.lastrowid
+            
+            # Insertar características
+            caracteristicas_query = text("""
+                INSERT INTO sistema_caracteristicas 
+                (id_sistema, nombre, marca, modelo, descripcion)
+                VALUES 
+                (:id_sistema, :nombre, :marca, :modelo, :descripcion)
+            """)
+            
+            db.session.execute(caracteristicas_query, {
+                'id_sistema': sistema_id,
+                'nombre': data['caracteristicas']['nombre'],
+                'marca': data['caracteristicas']['marca'],
+                'modelo': data['caracteristicas']['modelo'],
+                'descripcion': data['caracteristicas'].get('descripcion', '')
+            })
+            
+            db.session.commit()
+            
+            return jsonify({
+                "status": "success",
+                
+            }), 201
+            
+        except Exception as e:
+            db.session.rollback()
+            raise e
+            
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Error al crear sistema: {str(e)}"
+        }), 500
 
 # Obtener sistemas con filtros opcionales
 @systems_bp.route('/', methods=['GET'])
